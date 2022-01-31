@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 require('dotenv').config()
 const { STORE_URL, TOKEN } = process.env
 
-const API_ENDPOINT = 'https://punitastore.myshopify.com/admin/api/2021-10/orders.json';
+const API_ENDPOINT = `${STORE_URL}/admin/api/2021-10/orders.json`;
 
 exports.handler = async (event, context) => {
   try {
@@ -11,7 +11,7 @@ exports.handler = async (event, context) => {
     const response = await fetch(API_ENDPOINT, {
         headers: {
           'Content-Type': 'application/json',
-          'X-Shopify-Access-Token': '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',
+          'X-Shopify-Access-Token': `${TOKEN}`,
         },
       });
     const data = await response.json();
