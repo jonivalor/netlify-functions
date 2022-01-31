@@ -4393,6 +4393,118 @@ var init_multipart_parser = __esm({
   }
 });
 
+// node_modules/dotenv/lib/main.js
+var require_main = __commonJS({
+  "node_modules/dotenv/lib/main.js"(exports2, module2) {
+    var fs2 = require("fs");
+    var path = require("path");
+    var os = require("os");
+    function log(message) {
+      console.log(`[dotenv][DEBUG] ${message}`);
+    }
+    var NEWLINE = "\n";
+    var RE_INI_KEY_VAL = /^\s*([\w.-]+)\s*=\s*("[^"]*"|'[^']*'|.*?)(\s+#.*)?$/;
+    var RE_NEWLINES = /\\n/g;
+    var NEWLINES_MATCH = /\r\n|\n|\r/;
+    function parse(src, options) {
+      const debug = Boolean(options && options.debug);
+      const multiline = Boolean(options && options.multiline);
+      const obj = {};
+      const lines = src.toString().split(NEWLINES_MATCH);
+      for (let idx = 0; idx < lines.length; idx++) {
+        let line = lines[idx];
+        const keyValueArr = line.match(RE_INI_KEY_VAL);
+        if (keyValueArr != null) {
+          const key = keyValueArr[1];
+          let val = keyValueArr[2] || "";
+          let end = val.length - 1;
+          const isDoubleQuoted = val[0] === '"' && val[end] === '"';
+          const isSingleQuoted = val[0] === "'" && val[end] === "'";
+          const isMultilineDoubleQuoted = val[0] === '"' && val[end] !== '"';
+          const isMultilineSingleQuoted = val[0] === "'" && val[end] !== "'";
+          if (multiline && (isMultilineDoubleQuoted || isMultilineSingleQuoted)) {
+            const quoteChar = isMultilineDoubleQuoted ? '"' : "'";
+            val = val.substring(1);
+            while (idx++ < lines.length - 1) {
+              line = lines[idx];
+              end = line.length - 1;
+              if (line[end] === quoteChar) {
+                val += NEWLINE + line.substring(0, end);
+                break;
+              }
+              val += NEWLINE + line;
+            }
+          } else if (isSingleQuoted || isDoubleQuoted) {
+            val = val.substring(1, end);
+            if (isDoubleQuoted) {
+              val = val.replace(RE_NEWLINES, NEWLINE);
+            }
+          } else {
+            val = val.trim();
+          }
+          obj[key] = val;
+        } else if (debug) {
+          const trimmedLine = line.trim();
+          if (trimmedLine.length && trimmedLine[0] !== "#") {
+            log(`Failed to match key and value when parsing line ${idx + 1}: ${line}`);
+          }
+        }
+      }
+      return obj;
+    }
+    function resolveHome(envPath) {
+      return envPath[0] === "~" ? path.join(os.homedir(), envPath.slice(1)) : envPath;
+    }
+    function config(options) {
+      let dotenvPath = path.resolve(process.cwd(), ".env");
+      let encoding = "utf8";
+      const debug = Boolean(options && options.debug);
+      const override = Boolean(options && options.override);
+      const multiline = Boolean(options && options.multiline);
+      if (options) {
+        if (options.path != null) {
+          dotenvPath = resolveHome(options.path);
+        }
+        if (options.encoding != null) {
+          encoding = options.encoding;
+        }
+      }
+      try {
+        const parsed = DotenvModule.parse(fs2.readFileSync(dotenvPath, { encoding }), { debug, multiline });
+        Object.keys(parsed).forEach(function(key) {
+          if (!Object.prototype.hasOwnProperty.call(process.env, key)) {
+            process.env[key] = parsed[key];
+          } else {
+            if (override === true) {
+              process.env[key] = parsed[key];
+            }
+            if (debug) {
+              if (override === true) {
+                log(`"${key}" is already defined in \`process.env\` and WAS overwritten`);
+              } else {
+                log(`"${key}" is already defined in \`process.env\` and was NOT overwritten`);
+              }
+            }
+          }
+        });
+        return { parsed };
+      } catch (e2) {
+        if (debug) {
+          log(`Failed to load ${dotenvPath} ${e2.message}`);
+        }
+        return { error: e2 };
+      }
+    }
+    var DotenvModule = {
+      config,
+      parse
+    };
+    module2.exports.config = DotenvModule.config;
+    module2.exports.parse = DotenvModule.parse;
+    module2.exports = DotenvModule;
+  }
+});
+
 // node_modules/node-fetch/src/index.js
 var import_node_http2 = __toModule(require("http"));
 var import_node_https = __toModule(require("https"));
@@ -5556,9 +5668,12 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 }
 
 // functions/shopify-get-orders/shopify-get-orders.mjs
+require_main().config();
+var { STORE_URL, TOKEN } = process.env;
 var API_ENDPOINT = "https://punitastore.myshopify.com/admin/api/2021-10/orders.json";
 exports.handler = async (event, context) => {
   try {
+    console.log(STORE_URL, TOKEN);
     const response = await fetch(API_ENDPOINT, {
       headers: {
         "Content-Type": "application/json",

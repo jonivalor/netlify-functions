@@ -1,9 +1,13 @@
 import fetch from 'node-fetch';
 
-const API_ENDPOINT = `https://punitastore.myshopify.com/admin/api/2021-10/orders.json`;
+require('dotenv').config()
+const { STORE_URL, TOKEN } = process.env
+
+const API_ENDPOINT = 'https://punitastore.myshopify.com/admin/api/2021-10/orders.json';
 
 exports.handler = async (event, context) => {
   try {
+    console.log(STORE_URL, TOKEN);
     const response = await fetch(API_ENDPOINT, {
         headers: {
           'Content-Type': 'application/json',
