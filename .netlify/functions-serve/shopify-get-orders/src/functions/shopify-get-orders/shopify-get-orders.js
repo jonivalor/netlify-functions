@@ -5670,14 +5670,13 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 // functions/shopify-get-orders/shopify-get-orders.mjs
 require_main().config();
 var { STORE_URL, TOKEN } = process.env;
-var API_ENDPOINT = "https://punitastore.myshopify.com/admin/api/2021-10/orders.json";
+var API_ENDPOINT = `${STORE_URL}/admin/api/2021-10/orders.json`;
 exports.handler = async (event, context) => {
   try {
-    console.log(STORE_URL, TOKEN);
     const response = await fetch(API_ENDPOINT, {
       headers: {
         "Content-Type": "application/json",
-        "X-Shopify-Access-Token": "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"
+        "X-Shopify-Access-Token": `${TOKEN}`
       }
     });
     const data = await response.json();
